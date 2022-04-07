@@ -27,7 +27,7 @@ class BitwiseCalculator {
     }
 
     public int eval() throws IOException, ParseError {
-        int value = Tern();
+        int value = Exp();
 
         if (lookahead != -1 && lookahead != '\n')
             throw new ParseError();
@@ -35,32 +35,77 @@ class BitwiseCalculator {
         return value;
     }
 
-    private int Tern() throws IOException, ParseError {
-        if (isDigit(lookahead)) {
-            int cond = evalDigit(lookahead);
-
-            consume(lookahead);
-            return TernTail(cond); 
+    private int Exp() throws IOException, ParseError {
+        if (isDigit(lookahead) || lookahead == '(') {
+            // int number = evalDigit(lookahead);
+           
+            int res = XorTerm();
+            return Exp2(res); 
         }
 
         throw new ParseError();
     }
 
-    private int TernTail(int condition) throws IOException, ParseError {
+    private int Exp2(int res) throws IOException, ParseError {
         switch (lookahead) {
-            case '?':
-                consume('?');
-                int left = Tern();
-                consume(':');
-                int right = Tern();
+            case '^':
+                consume('^');
+                res = res ^ XorTerm();
+                return Exp2(res);
 
-                return condition != 0 ? left : right;
             case -1:
             case '\n':
-            case ':':
-                return condition;
+            case ')':
+                return res;
         }
 
+        throw new ParseError();
+    }
+
+    private int XorTerm() throws IOException, ParseError {
+        if (isDigit(lookahead) || lookahead == '(') {
+            // int number = evalDigit(lookahead);
+
+            int res = AndTerm();
+            return XorTerm2(res); 
+        }
+
+        throw new ParseError();
+    }
+
+    private int XorTerm2(int res) throws IOException, ParseError {
+        switch (lookahead) {
+            case '&':
+                consume('&');
+                res = res & AndTerm();
+                return XorTerm2(res);
+
+            case -1:
+            case '\n':
+            case ')':
+            case '^':
+                return res;
+        }
+
+        throw new ParseError();
+    }
+
+    private int AndTerm() throws IOException, ParseError {
+        if (isDigit(lookahead)) {
+            int number = evalDigit(lookahead);
+
+            consume(lookahead);
+
+            return number;
+
+        }
+        else if(lookahead == '(') {
+            consume('(');
+            int res = Exp();
+            consume(')');
+
+            return res;
+        }
         throw new ParseError();
     }
 }
