@@ -12,6 +12,8 @@ parser code {:
     Scanner s;
     Parser(Scanner s){ this.s=s; }
     
+    // This function makes sure that when we have function declarations
+    // in java, the arguments are all String
     String printCorrectFuncDec(Object s1) {
         String str = s1.toString();
         char space = ' ';
@@ -26,19 +28,17 @@ parser code {:
             while(true) {
                 firstTime = 0;
                 stringToReturn += str.charAt(i);
-                System.out.println(stringToReturn);
                 
-
+                // Finding a '(' outside of the func's body means that we shoud insert "String" after
                 if(firstTime == 0 &&  str.charAt(i) == '(' && str.charAt(i+1) != ')'){
                     stringToReturn = stringToReturn 
                                     + stringToBeInsertedSpace ;
                     
-                    System.out.println("\n\n" + str.substring(j + 1)+  " \n\n");
-
                     j+= stringToBeInsertedSpace.length();
                     firstTime++;
                 }
 
+                // Finding a ',' means that we shoud insert "String" after
                 if(str.charAt(i) == ',') {
                     stringToReturn = stringToReturn
                                     + stringToBeInserted ;
@@ -61,7 +61,8 @@ parser code {:
 
                 j++;
                 i++;
-
+                
+                // Exit the loop
                 if(i >= str.length())
                     break;
             }
@@ -83,7 +84,6 @@ terminal String     STRING_LITERAL, IDENTIFIER;
 
 /*  Non terminals */
 non terminal            program, expr, func_declar, args, func_declar_list, expr_list, func_head, if_else, cond, reverse;
-// non terminal String    expr, expr_list;      // used to store evaluated subexpressions
 
 /**
  *  Precedence Declarations
@@ -107,15 +107,28 @@ program ::=  func_declar_list:r1 expr_list:r2                       {:  String r
                                                                         System.out.printf("%s\n", retStr);
                                                                         System.out.println("}");
                                                                     :}
-
-          ;
+         |  expr_list:r2                                            {:
+                                                                        System.out.println("\n-------------------------------------------\n");
+                                                                        System.out.println("public class Main {");
+                                                                        System.out.println("\tpublic static void main(String[] args) {");
+                                                                        System.out.printf("%s\n", r2);
+                                                                        System.out.println("\t}");
+                                                                        System.out.println("}"); 
+                                                                    :}
+         |                                                          {: 
+                                                                        System.out.println("\n-------------------------------------------\n");
+                                                                        System.out.println("public class Main {");
+                                                                        System.out.println("\tpublic static void main(String[] args) {");
+                                                                        System.out.println("\t}");
+                                                                        System.out.println("}");
+                                                                    :}
+         ;
 
 func_declar_list ::= func_declar_list:r1 func_declar:r2             {: RESULT = String.format("%s\n%s", r1, r2); :} 
-               |                                                    {: RESULT = String.format(""); :}
-               ;
+                   | func_declar:r1                                 {: RESULT = String.format("%s", r1); :}
+                   ;
 
 func_declar ::= func_head:fh LBRAC expr:expr RBRAC                  {: RESULT = String.format("\tpublic static String %s {\n\t\treturn %s;\n\t}", fh, expr); :}
-              |                                                     {: RESULT = String.format("");:}
               ;
 
 func_head ::= IDENTIFIER:id LPAREN args:args RPAREN                 {: RESULT = String.format("%s(%s)", id, args); :}
@@ -138,7 +151,7 @@ expr ::= STRING_LITERAL:s                                           {: RESULT = 
        | reverse:r                                                  {: RESULT = String.format("%s", r); :}
        ;
 
-if_else ::= IF LPAREN cond:cond RPAREN expr:expr1 ELSE expr:expr2   {: RESULT = String.format("(%s) ? (%s) : (%s)", cond, expr1, expr2); :}
+if_else ::= IF LPAREN cond:cond RPAREN expr:expr1 ELSE expr:expr2   {: RESULT = String.format("((%s) ? (%s) : (%s))", cond, expr1, expr2); :}
           ;
 
 cond ::= expr:expr1 PREFIX expr:expr2                               {: RESULT = String.format("%s.startsWith(%s)", expr2, expr1); :}
