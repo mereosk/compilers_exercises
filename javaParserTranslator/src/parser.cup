@@ -11,7 +11,7 @@ parser code {:
     // Connect this parser to a scanner!
     Scanner s;
     Parser(Scanner s){ this.s=s; }
-
+    
     String printCorrectFuncDec(Object s1) {
         String str = s1.toString();
         char space = ' ';
@@ -21,40 +21,51 @@ parser code {:
         String stringToReturn = new String();
         int firstTime = 0;
 
+        int i=0, j=0;
         // Traverse the string
-        for (int i = 0; i < str.length(); i++) {
+            while(true) {
+                firstTime = 0;
+                stringToReturn += str.charAt(i);
+                System.out.println(stringToReturn);
+                
 
-            tempString += str.charAt(i);
-            while(1) {
-                if(firstTime == 0 &&  str.charAt(i) == '('){
-                    stringToReturn = originalString.substring(0, index + 1) 
-                           + stringToBeInserted 
-                           + originalString.substring(index + 1); 
+                if(firstTime == 0 &&  str.charAt(i) == '(' && str.charAt(i+1) != ')'){
+                    stringToReturn = stringToReturn 
+                                    + stringToBeInsertedSpace ;
+                    
+                    System.out.println("\n\n" + str.substring(j + 1)+  " \n\n");
+
+                    j+= stringToBeInsertedSpace.length();
+                    firstTime++;
                 }
 
-            }
-            
-            // tempString += str.charAt(i);
-
-            // if(str.charAt(i) == ',') {
-            //    tempString += stringToBeInserted;
-            //    firstTime++;
-            // }
-
-            // if(firstTime>0 && str.charAt(i) == ')') {
-            //     for(int j=i ; j>=0 ; j--) {
-            //         if(str.charAt(j) == '(') {
-            //             // Create a new string
-            //             stringToReturn = tempString.substring(0, j + 1)
-            //                 + stringToBeInsertedSpace
-            //                 + tempString.substring(j + 1);
-            //         }
+                if(str.charAt(i) == ',') {
+                    stringToReturn = stringToReturn
+                                    + stringToBeInserted ;
                     
-            //     }
-                
-            // }
+                    j+= stringToBeInserted.length();
+                }
 
-        }
+                // Skip body
+                if(str.charAt(i) == '{') {
+                    while(true) {
+                        if(str.charAt(i) != '}') {
+                            i++;
+                            j++;
+                            stringToReturn += str.charAt(i);
+                        }
+                        else
+                            break;
+                    }
+                }
+
+                j++;
+                i++;
+
+                if(i >= str.length())
+                    break;
+            }
+
         return stringToReturn;
     }
 :}
@@ -93,7 +104,7 @@ program ::=  func_declar_list:r1 expr_list:r2                       {:  String r
                                                                         System.out.println("\tpublic static void main(String[] args) {");
                                                                         System.out.printf("%s\n", r2);
                                                                         System.out.println("\t}");
-                                                                        System.out.printf("%s\n", r1);
+                                                                        System.out.printf("%s\n", retStr);
                                                                         System.out.println("}");
                                                                     :}
 
