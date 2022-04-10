@@ -11,6 +11,52 @@ parser code {:
     // Connect this parser to a scanner!
     Scanner s;
     Parser(Scanner s){ this.s=s; }
+
+    String printCorrectFuncDec(Object s1) {
+        String str = s1.toString();
+        char space = ' ';
+        String stringToBeInserted = "String";
+        String stringToBeInsertedSpace = stringToBeInserted + space;
+        String tempString = new String();
+        String stringToReturn = new String();
+        int firstTime = 0;
+
+        // Traverse the string
+        for (int i = 0; i < str.length(); i++) {
+
+            tempString += str.charAt(i);
+            while(1) {
+                if(firstTime == 0 &&  str.charAt(i) == '('){
+                    stringToReturn = originalString.substring(0, index + 1) 
+                           + stringToBeInserted 
+                           + originalString.substring(index + 1); 
+                }
+
+            }
+            
+            // tempString += str.charAt(i);
+
+            // if(str.charAt(i) == ',') {
+            //    tempString += stringToBeInserted;
+            //    firstTime++;
+            // }
+
+            // if(firstTime>0 && str.charAt(i) == ')') {
+            //     for(int j=i ; j>=0 ; j--) {
+            //         if(str.charAt(j) == '(') {
+            //             // Create a new string
+            //             stringToReturn = tempString.substring(0, j + 1)
+            //                 + stringToBeInsertedSpace
+            //                 + tempString.substring(j + 1);
+            //         }
+                    
+            //     }
+                
+            // }
+
+        }
+        return stringToReturn;
+    }
 :}
 
 /* define how to connect to the scanner! */
@@ -41,7 +87,7 @@ precedence left STRING_LITERAL;
  *  The Grammar Rules
  */
 
-program ::=  func_declar_list:r1 expr_list:r2                       {: 
+program ::=  func_declar_list:r1 expr_list:r2                       {:  String retStr = printCorrectFuncDec(r1);
                                                                         System.out.println("\n-------------------------------------------\n");
                                                                         System.out.println("public class Main {");
                                                                         System.out.println("\tpublic static void main(String[] args) {");
