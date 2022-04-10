@@ -74,7 +74,7 @@ Identifier = [:jletter:] [:jletterdigit:]*
  "}"            { return symbol(sym.RBRAC); }
  "{"            { return symbol(sym.LBRAC); }
  "+"            { return symbol(sym.CONCAT); }
- "Identifier"   { return symbol(sym.IDENTIFIER); }
+ {Identifier}   { return symbol(sym.IDENTIFIER, yytext()); }
  "("            { return symbol(sym.LPAREN); }
  ")"            { return symbol(sym.RPAREN); }
  \"             { stringBuffer.setLength(0); yybegin(STRING); }
