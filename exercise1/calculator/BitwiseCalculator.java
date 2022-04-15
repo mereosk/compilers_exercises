@@ -1,6 +1,6 @@
 import java.io.InputStream;
 import java.io.IOException;
-
+// s
 class BitwiseCalculator {
     private final InputStream in;
 
