@@ -1,3 +1,5 @@
+import my_visitors.*;
+import symbol_table.*;
 import syntaxtree.*;
 import visitor.*;
 
@@ -6,6 +8,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 public class Main {
+
     public static void main(String[] args) throws Exception {
         if(args.length < 1){
             System.err.println("Usage: java Main <file1> <file2> ... <fileN>");
@@ -25,7 +28,9 @@ public class Main {
 
                 System.err.println("Program parsed successfully.");
 
-                MyVisitor eval = new MyVisitor();
+                SymbolTable symTable = new SymbolTable();
+
+                STFillVisitor eval = new STFillVisitor(symTable);
                 root.accept(eval, null);
             }   // Catch the parse exception
             catch(ParseException ex){

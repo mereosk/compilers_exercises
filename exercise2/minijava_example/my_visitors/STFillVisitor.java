@@ -1,7 +1,18 @@
+package my_visitors;
+
+import symbol_table.*;
 import syntaxtree.*;
 import visitor.GJDepthFirst;
 
-class MyVisitor extends GJDepthFirst<String, Void>{
+// Decl collector &&  type ckecker
+public class STFillVisitor extends GJDepthFirst<String, Void>{
+
+    SymbolTable symTable;
+
+    public STFillVisitor(SymbolTable symTable) {
+        this.symTable = symTable;
+    }
+    
     /**
      * f0 -> "class"
      * f1 -> Identifier()
