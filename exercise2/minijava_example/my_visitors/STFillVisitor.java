@@ -1,42 +1,63 @@
 package my_visitors;
 
 import symbol_table.*;
+import symbol_table.Class;
 import syntaxtree.*;
 import visitor.GJDepthFirst;
 
 // Decl collector &&  type ckecker
 public class STFillVisitor extends GJDepthFirst<String, Void>{
 
-    SymbolTable symTable;
+    private SymbolTable symTable;
+    private String currentScope;
 
     public STFillVisitor(SymbolTable symTable) {
         this.symTable = symTable;
     }
+
+    public String getScope() {
+        return currentScope;
+    }
     
     /**
-     * f0 -> "class"
-     * f1 -> Identifier()
-     * f2 -> "{"
-     * f3 -> "public"
-     * f4 -> "static"
-     * f5 -> "void"
-     * f6 -> "main"
-     * f7 -> "("
-     * f8 -> "String"
-     * f9 -> "["
-     * f10 -> "]"
-     * f11 -> Identifier()
-     * f12 -> ")"
-     * f13 -> "{"
-     * f14 -> ( VarDeclaration() )*
-     * f15 -> ( Statement() )*
-     * f16 -> "}"
-     * f17 -> "}"
-     */
+        * f0 -> "class"
+        * f1 -> Identifier()
+        * f2 -> "{"
+        * f3 -> "public"
+        * f4 -> "static"
+        * f5 -> "void"
+        * f6 -> "main"
+        * f7 -> "("
+        * f8 -> "String"
+        * f9 -> "["
+        * f10 -> "]"
+        * f11 -> Identifier()
+        * f12 -> ")"
+        * f13 -> "{"
+        * f14 -> ( VarDeclaration() )*
+        * f15 -> ( Statement() )*
+        * f16 -> "}"
+        * f17 -> "}"
+    */
     @Override
     public String visit(MainClass n, Void argu) throws Exception {
-        String classname = n.f1.accept(this, null);
-        System.out.println("Class: " + classname);
+        String className = n.f1.accept(this, null);
+
+        // Add the class in the symbol table 
+        symTable.insertClass(className, null);
+
+        // Add the method in the Class
+        Class mainClass = symTable.getClass(className);
+        Method tempMethod = new Method("main", "void");
+        mainClass.insertMethod(tempMethod);
+
+        // Add the variable in the main method
+        Method mainMethod = mainClass.getMethod("main");
+        String mainArgName = n.f11.accept(this, null);
+        Variable mainArg = new Variable(mainArgName, "String[]");
+        mainMethod.insertParameter(mainArg);
+
+        System.out.println("Class: " + className);
 
         super.visit(n, argu);
 
@@ -55,10 +76,15 @@ public class STFillVisitor extends GJDepthFirst<String, Void>{
      */
     @Override
     public String visit(ClassDeclaration n, Void argu) throws Exception {
-        String classname = n.f1.accept(this, null);
-        System.out.println("Class: " + classname);
+        String className = n.f1.accept(this, null);
 
-        super.visit(n, argu);
+        // Add the class in the symbol table 
+        symTable.insertClass(className, null);
+
+        System.out.println("Class: " + className);
+
+        n.f3.accept(this, null);
+        n.f4.accept(this, null);
 
         System.out.println();
 
@@ -77,10 +103,16 @@ public class STFillVisitor extends GJDepthFirst<String, Void>{
      */
     @Override
     public String visit(ClassExtendsDeclaration n, Void argu) throws Exception {
-        String classname = n.f1.accept(this, null);
-        System.out.println("Class: " + classname);
+        String className = n.f1.accept(this, null);
+        String superClassName = n.f3.accept(this, null);
 
-        super.visit(n, argu);
+        // Add the class in the symbol table 
+        symTable.insertClass(className, superClassName);
+
+        System.out.println("Class: " + className);
+
+        n.f3.accept(this, null);
+        n.f4.accept(this, null);
 
         System.out.println();
 
@@ -161,9 +193,26 @@ public class STFillVisitor extends GJDepthFirst<String, Void>{
         return type + " " + name;
     }
 
+    /**
+    * f0 -> Type()
+    * f1 -> Identifier()
+    * f2 -> ";"
+    */
     @Override
-    public String visit(ArrayType n, Void argu) {
+    public String visit(VarDeclaration n, Void argu) throws Exception{
+        String name = n.f1.accept(this, null);
+        String type = n.f0.accept(this, null);
+        
+        return null;
+    }
+
+    @Override
+    public String visit(IntegerArrayType n, Void argu) {
         return "int[]";
+    }
+
+    public String visit(BooleanArrayType n, Void argu)  {
+        return "boolean[]";
     }
 
     public String visit(BooleanType n, Void argu) {
