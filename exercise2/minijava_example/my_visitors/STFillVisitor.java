@@ -10,6 +10,10 @@ public class STFillVisitor extends GJDepthFirst<String, Void>{
 
     private SymbolTable symTable;
     private String currentScope;
+    // This variable will be used as a flag
+    // If its value is false then the scope is a class
+    // If the value is true the the scope is a method
+    private boolean typeOfScope;
 
     public STFillVisitor(SymbolTable symTable) {
         this.symTable = symTable;
@@ -17,6 +21,18 @@ public class STFillVisitor extends GJDepthFirst<String, Void>{
 
     public String getScope() {
         return currentScope;
+    }
+
+    public boolean getScopeType() {
+        return typeOfScope;
+    }
+
+    public void setScope(String scopeName) {
+        this.currentScope = scopeName;
+    }
+
+    public void setScopeType(boolean scopeType) {
+        this.typeOfScope = scopeType;
     }
     
     /**
@@ -83,6 +99,9 @@ public class STFillVisitor extends GJDepthFirst<String, Void>{
 
         System.out.println("Class: " + className);
 
+        setScope(className);
+        setScopeType(false);
+
         n.f3.accept(this, null);
         n.f4.accept(this, null);
 
@@ -111,8 +130,10 @@ public class STFillVisitor extends GJDepthFirst<String, Void>{
 
         System.out.println("Class: " + className);
 
-        n.f3.accept(this, null);
-        n.f4.accept(this, null);
+        setScope(className);
+        setScopeType(false);
+        n.f5.accept(this, null);
+        n.f6.accept(this, null);
 
         System.out.println();
 
@@ -137,11 +158,39 @@ public class STFillVisitor extends GJDepthFirst<String, Void>{
     @Override
     public String visit(MethodDeclaration n, Void argu) throws Exception {
         String argumentList = n.f4.present() ? n.f4.accept(this, null) : "";
+        // Argument list is a big string with arguments that are in form:
+        // int arg1, int arg2 etc
+        // So split the list in an array
+        String argArray[] = argumentList.split(",");
+    
 
-        String myType = n.f1.accept(this, null);
-        String myName = n.f2.accept(this, null);
+        String type = n.f1.accept(this, null);
+        String name = n.f2.accept(this, null);
 
-        System.out.println(myType + " " + myName + " -- " + argumentList);
+        System.out.println(type + " " + name + " -- " + argumentList);
+
+        // Find the class of the method from the scope
+        Class currentClass = symTable.getClass(getScope());
+        // Add the mehtod in the current class
+        Method currentMethod = new Method(name, type);
+        currentClass.insertMethod(currentMethod);
+
+        // Add the arguments in the class Method
+        Method methodInClass = currentClass.getMethod(name);
+        for(String arg : argArray) {
+            arg = arg.trim();
+
+            String[] typeAndName = arg.split(" ");
+            Variable argToBeInserted = new Variable(typeAndName[1], typeAndName[0]);
+            methodInClass.insertParameter(argToBeInserted);
+        }
+
+        // Set the method's name as the scope
+        setScope(name);
+        setScopeType(true);
+
+        n.f7.accept(this, null);
+
         return null;
     }
 
@@ -200,8 +249,21 @@ public class STFillVisitor extends GJDepthFirst<String, Void>{
     */
     @Override
     public String visit(VarDeclaration n, Void argu) throws Exception{
+        System.out.println("Im here");
         String name = n.f1.accept(this, null);
         String type = n.f0.accept(this, null);
+
+        // Check it the type of scope is a method or a class
+        // True is for the method
+        if(getScopeType())
+            Method currentMethod = symTable.
+        else    // False is  for the class
+            Class currentClass = symTable.getClass(getScope()); // Find the class of the variable from the scope
+        
+        
+
+
+        System.out.println(type + " "+name+ " "+ "Current scope is :" +  currentScope);
         
         return null;
     }
