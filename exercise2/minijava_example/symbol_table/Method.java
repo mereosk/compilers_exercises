@@ -7,6 +7,7 @@ public class Method {
     private String name;
     private String type;
     private int offset;
+    private boolean overridden;
 
     private List<Variable> params, vars;
 
@@ -15,6 +16,7 @@ public class Method {
         this.type = methodType;
         this.params = new ArrayList<>();
         this.vars = new ArrayList<>();
+        this.overridden = false;
     }
     
     public String getName() {
@@ -41,8 +43,16 @@ public class Method {
         return this.offset;
     }
 
+    public boolean isOverridden() {
+        return overridden;
+    }
+
     public void setOffset(int offset) {
         this.offset = offset;
+    }
+
+    public void setOverridden() {
+        this.overridden = true;
     }
 
     public void insertParameter(Variable param) {
@@ -55,8 +65,20 @@ public class Method {
         vars.add(var);
     }
 
+    public void printOffset() {
+        if(!overridden)
+            System.out.println(name+" : " + offset);     
+    }
+
     // This function prints the method for debugging purposes
     public void printMethod() {
-
+        System.out.println("\t\t\tParameters:");
+        for(Variable param: params) {
+            param.printVariable();
+        }
+        System.out.println("\t\t\tVariables:");
+        for(Variable var: vars) {
+            var.printVariable();
+        }
     }
 }

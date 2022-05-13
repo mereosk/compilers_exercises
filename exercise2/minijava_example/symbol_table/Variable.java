@@ -27,8 +27,12 @@ public class Variable {
         this.offset = offset;
     }
 
+    public void printOffset() {
+        System.out.println(name+" : " + offset);        
+    }
+
     // This function prints the variable for debugging purposes
     public void printVariable() {
-
+        System.out.println("\t\t\t\t" + type + " " + name);
     }
 }

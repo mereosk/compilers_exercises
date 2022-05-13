@@ -9,30 +9,27 @@ import visitor.GJDepthFirst;
 public class STFillVisitor extends GJDepthFirst<String, Void>{
 
     private SymbolTable symTable;
-    private String currentScope;
-    // This variable will be used as a flag
-    // If its value is false then the scope is a class
-    // If the value is true the the scope is a method
-    private boolean typeOfScope;
+    private String[] currentScope;
 
     public STFillVisitor(SymbolTable symTable) {
         this.symTable = symTable;
+        this.currentScope = new String[2];
     }
 
-    public String getScope() {
-        return currentScope;
+    public String getClassScope() {
+        return currentScope[0];
     }
 
-    public boolean getScopeType() {
-        return typeOfScope;
+    public String getMethodScope() {
+        return currentScope[1];
     }
 
-    public void setScope(String scopeName) {
-        this.currentScope = scopeName;
+    public void setScopeClass(String className) {
+        this.currentScope[0] = className;
     }
 
-    public void setScopeType(boolean scopeType) {
-        this.typeOfScope = scopeType;
+    public void setScopeMethod(String methodName) {
+        this.currentScope[1] = methodName;
     }
     
     /**
@@ -75,7 +72,7 @@ public class STFillVisitor extends GJDepthFirst<String, Void>{
 
         System.out.println("Class: " + className);
 
-        super.visit(n, argu);
+        n.f14.accept(this, null);
 
         System.out.println();
 
@@ -99,8 +96,8 @@ public class STFillVisitor extends GJDepthFirst<String, Void>{
 
         System.out.println("Class: " + className);
 
-        setScope(className);
-        setScopeType(false);
+        setScopeClass(className);
+        setScopeMethod(null);
 
         n.f3.accept(this, null);
         n.f4.accept(this, null);
@@ -130,8 +127,9 @@ public class STFillVisitor extends GJDepthFirst<String, Void>{
 
         System.out.println("Class: " + className);
 
-        setScope(className);
-        setScopeType(false);
+        setScopeClass(className);
+        setScopeMethod(null);
+
         n.f5.accept(this, null);
         n.f6.accept(this, null);
 
@@ -170,24 +168,25 @@ public class STFillVisitor extends GJDepthFirst<String, Void>{
         System.out.println(type + " " + name + " -- " + argumentList);
 
         // Find the class of the method from the scope
-        Class currentClass = symTable.getClass(getScope());
+        Class currentClass = symTable.getClass(getClassScope());
         // Add the mehtod in the current class
         Method currentMethod = new Method(name, type);
         currentClass.insertMethod(currentMethod);
 
         // Add the arguments in the class Method
-        Method methodInClass = currentClass.getMethod(name);
-        for(String arg : argArray) {
-            arg = arg.trim();
-
-            String[] typeAndName = arg.split(" ");
-            Variable argToBeInserted = new Variable(typeAndName[1], typeAndName[0]);
-            methodInClass.insertParameter(argToBeInserted);
+        if(argumentList != "") {
+            Method methodInClass = currentClass.getMethod(name);
+            for(String arg : argArray) {
+                arg = arg.trim();
+                System.out.println("-------"+arg+"-----");
+                String[] typeAndName = arg.split(" ");
+                Variable argToBeInserted = new Variable(typeAndName[1], typeAndName[0]);
+                methodInClass.insertParameter(argToBeInserted);
+            }
         }
 
         // Set the method's name as the scope
-        setScope(name);
-        setScopeType(true);
+        setScopeMethod(name);
 
         n.f7.accept(this, null);
 
@@ -253,17 +252,21 @@ public class STFillVisitor extends GJDepthFirst<String, Void>{
         String name = n.f1.accept(this, null);
         String type = n.f0.accept(this, null);
 
+        // Get the current class from the scope
+        Class currentClass = symTable.getClass(getClassScope());
+        // Make the variable
+        Variable var = new Variable(name, type);
+
         // Check it the type of scope is a method or a class
-        // True is for the method
-        if(getScopeType())
-            Method currentMethod = symTable.
-        else    // False is  for the class
-            Class currentClass = symTable.getClass(getScope()); // Find the class of the variable from the scope
-        
-        
+        if(getMethodScope() != null) {
+            Method currentMethod = currentClass.getMethod(getMethodScope());
+            currentMethod.insertVariable(var);
+        }
+        else {
+            currentClass.insertVariable(var);
+        }
 
-
-        System.out.println(type + " "+name+ " "+ "Current scope is :" +  currentScope);
+        // System.out.println(type + " "+name+ " "+ "Current scope is :" +  currentScope);
         
         return null;
     }

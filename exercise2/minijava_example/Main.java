@@ -32,6 +32,9 @@ public class Main {
 
                 STFillVisitor eval = new STFillVisitor(symTable);
                 root.accept(eval, null);
+
+                // symTable.printSymbolTable();
+                symTable.printOffset();
             }   // Catch the parse exception
             catch(ParseException ex){
                 System.out.println(ex.getMessage());
