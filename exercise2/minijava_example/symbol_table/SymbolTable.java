@@ -46,8 +46,7 @@ public class SymbolTable {
 
     public void printOffset() {
         System.out.println("\n--------------------------------");
-        System.out.println("Printing offsets");
-        System.out.println("--------------------------------");
+        System.out.println("Printing offsets\n");
         // Loop through all the classes
         for(String className: classes.keySet()) {
             Class currentClass = classes.get(className);

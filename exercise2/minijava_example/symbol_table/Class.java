@@ -97,19 +97,23 @@ public class Class {
     }
 
     public void printOffset() {
+        System.out.println("-----------Class " + name + "-----------");
         // Loop through all the fields and print their offset
+        System.out.println("--Variables---");
         for(String fieldName: variables.keySet()) {
             Variable currentField = variables.get(fieldName);
             System.out.print(getName() + ".");
             currentField.printOffset();
         }
         // Loop through all the methods and print their offset
+        System.out.println("---Methods---");
         for(String methodName: methods.keySet()) {
             Method currentMethod = methods.get(methodName);
             if(!currentMethod.isOverridden())
                 System.out.print(getName() + ".");
             currentMethod.printOffset();
         }
+        System.out.println();
     }
 
     // This function prints the class for debugging purposes
