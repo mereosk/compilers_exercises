@@ -44,6 +44,40 @@ public class SymbolTable {
         classes.put(className, tempClass);
     }
 
+    public Variable findVariable(String nameOfId, String[] scope) {
+
+        System.out.println(nameOfId);
+        String methodName = scope[1];
+        String className = scope[0];
+
+        // Get the current class
+        Class currentClass = getClass(className);
+
+        // Search method's args and variables
+        if(methodName != null) {
+            Method currentMethod = currentClass.getMethod(methodName);
+            Variable var = currentMethod.getVar(nameOfId);
+
+            if(var!=null)
+                return var;
+        }
+
+        // Search the class fields for the variable
+        Variable var = currentClass.getVariable(nameOfId);
+
+        if(var != null)
+            return var;
+
+        // If we didn't find it yet search the superclasses for its existance
+        // of course if they exist
+        String parentClass = currentClass.getparentClassName();
+        if(parentClass == null)
+            return null;
+        scope[0] = parentClass;
+        scope[1] = null;
+        return findVariable(nameOfId, scope);
+    }
+
     public void printOffset() {
         System.out.println("\n--------------------------------");
         System.out.println("Printing offsets\n");

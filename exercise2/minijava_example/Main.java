@@ -30,17 +30,26 @@ public class Main {
 
                 SymbolTable symTable = new SymbolTable();
 
-                STFillVisitor eval = new STFillVisitor(symTable);
-                root.accept(eval, null);
+                STFillVisitor smFilling = new STFillVisitor(symTable);
+                root.accept(smFilling, null);
 
                 // symTable.printSymbolTable();
                 symTable.printOffset();
+
+                TCVisitor typeChecking = new TCVisitor(symTable);
+                root.accept(typeChecking, null);
+
+                // symTable.printSymbolTable();
+                // symTable.printOffset();
             }   // Catch the parse exception
             catch(ParseException ex){
                 System.out.println(ex.getMessage());
             }   // Catch the file exception
             catch(FileNotFoundException ex){
                 System.err.println(ex.getMessage());
+            }
+            catch(Exception e) {
+                System.err.println("Error: " + e.getMessage() + "\n");
             }
             finally{
                 try{

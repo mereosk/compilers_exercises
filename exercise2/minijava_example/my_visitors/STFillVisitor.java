@@ -5,7 +5,7 @@ import symbol_table.Class;
 import syntaxtree.*;
 import visitor.GJDepthFirst;
 
-// Decl collector &&  type ckecker
+// Decl collector
 public class STFillVisitor extends GJDepthFirst<String, Void>{
 
     private SymbolTable symTable;

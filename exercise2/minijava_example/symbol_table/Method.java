@@ -35,6 +35,27 @@ public class Method {
         return vars;
     }
 
+    public Variable getVar(String varName) {
+        // First search the variables
+        for(Iterator<Variable> iter = vars.iterator(); iter.hasNext(); ) {
+            Variable var = iter.next();
+
+            if(var.getName().equals(varName))
+                return var;
+        }
+
+        // Second search the arguments
+        for(Iterator<Variable> iter = params.iterator(); iter.hasNext(); ) {
+            Variable param = iter.next();
+
+            if(param.getName().equals(varName))
+                return param;
+        }
+
+        // Variable doesn't exist in this method
+        return null;
+    }
+
     public int getNumParams(){
         return params.size();
     }
