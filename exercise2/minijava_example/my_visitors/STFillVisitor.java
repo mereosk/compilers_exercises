@@ -70,11 +70,10 @@ public class STFillVisitor extends GJDepthFirst<String, Void>{
         Variable mainArg = new Variable(mainArgName, "String[]");
         mainMethod.insertParameter(mainArg);
 
-        System.out.println("Class: " + className);
+        setScopeClass(className);
+        setScopeMethod(null);
 
         n.f14.accept(this, null);
-
-        System.out.println();
 
         return null;
     }
@@ -94,15 +93,11 @@ public class STFillVisitor extends GJDepthFirst<String, Void>{
         // Add the class in the symbol table 
         symTable.insertClass(className, null);
 
-        System.out.println("Class: " + className);
-
         setScopeClass(className);
         setScopeMethod(null);
 
         n.f3.accept(this, null);
         n.f4.accept(this, null);
-
-        System.out.println();
 
         return null;
     }
@@ -125,15 +120,11 @@ public class STFillVisitor extends GJDepthFirst<String, Void>{
         // Add the class in the symbol table 
         symTable.insertClass(className, superClassName);
 
-        System.out.println("Class: " + className);
-
         setScopeClass(className);
         setScopeMethod(null);
 
         n.f5.accept(this, null);
         n.f6.accept(this, null);
-
-        System.out.println();
 
         return null;
     }
@@ -165,8 +156,6 @@ public class STFillVisitor extends GJDepthFirst<String, Void>{
         String type = n.f1.accept(this, null);
         String name = n.f2.accept(this, null);
 
-        System.out.println(type + " " + name + " -- " + argumentList);
-
         // Find the class of the method from the scope
         Class currentClass = symTable.getClass(getClassScope());
         // Add the mehtod in the current class
@@ -178,7 +167,6 @@ public class STFillVisitor extends GJDepthFirst<String, Void>{
             Method methodInClass = currentClass.getMethod(name);
             for(String arg : argArray) {
                 arg = arg.trim();
-                System.out.println("-------"+arg+"-----");
                 String[] typeAndName = arg.split(" ");
                 Variable argToBeInserted = new Variable(typeAndName[1], typeAndName[0]);
                 methodInClass.insertParameter(argToBeInserted);
@@ -248,7 +236,6 @@ public class STFillVisitor extends GJDepthFirst<String, Void>{
     */
     @Override
     public String visit(VarDeclaration n, Void argu) throws Exception{
-        System.out.println("Im here");
         String name = n.f1.accept(this, null);
         String type = n.f0.accept(this, null);
 
@@ -266,8 +253,6 @@ public class STFillVisitor extends GJDepthFirst<String, Void>{
             currentClass.insertVariable(var);
         }
 
-        // System.out.println(type + " "+name+ " "+ "Current scope is :" +  currentScope);
-        
         return null;
     }
 

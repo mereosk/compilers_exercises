@@ -7,7 +7,13 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+
 public class Main {
+
+    public static final String ANSI_RESET = "\u001B[0m";
+    public static final String ANSI_RED = "\u001B[31m";
+    public static final String ANSI_BLUE = "\u001B[34m";
+    public static final String ANSI_GREEN = "\u001B[32m";
 
     public static void main(String[] args) throws Exception {
         if(args.length < 1){
@@ -35,12 +41,14 @@ public class Main {
 
                 // symTable.printSymbolTable();
                 symTable.printOffset();
+                System.out.println("--------------------------------");
+                System.out.println(ANSI_GREEN + "Starting type checking the program" + ANSI_RESET);
 
                 TCVisitor typeChecking = new TCVisitor(symTable);
                 root.accept(typeChecking, null);
 
-                // symTable.printSymbolTable();
-                // symTable.printOffset();
+                System.out.println(ANSI_GREEN + "Finished, everything went smoothly\n" + ANSI_RESET);
+
             }   // Catch the parse exception
             catch(ParseException ex){
                 System.out.println(ex.getMessage());
@@ -49,7 +57,7 @@ public class Main {
                 System.err.println(ex.getMessage());
             }
             catch(Exception e) {
-                System.err.println("Error: " + e.getMessage() + "\n");
+                System.err.println(ANSI_RED + "\nError: " + e.getMessage() + "\n" + ANSI_RESET);
             }
             finally{
                 try{

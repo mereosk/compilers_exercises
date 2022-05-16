@@ -52,7 +52,11 @@ public class Class {
         return parentClassName;
     }
 
-    public void insertVariable(Variable var) {
+    public void insertVariable(Variable var) throws Exception {
+        String varName = var.getName();
+        if(variables.containsKey(varName))
+            throw new Exception("Variable " + varName + " is already defined in class " + getName());
+
         // Insert the var in the map
         variables.put(var.getName(), var);
 
@@ -69,7 +73,11 @@ public class Class {
             varOffset += 8;                     // Arrays or Objects are pointers thus increment by 8
     }
 
-    public void insertMethod(Method method) {
+    public void insertMethod(Method method) throws Exception {
+        String methodName = method.getName();
+        if(methods.containsKey(methodName))
+            throw new Exception("Method " + methodName + " is already defined in class " + getName());
+
         // Insert the method in the map
         methods.put(method.getName(), method);
 

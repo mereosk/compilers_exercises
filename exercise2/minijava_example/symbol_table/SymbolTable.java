@@ -12,7 +12,6 @@ public class SymbolTable {
         this.classes = new HashMap<>();
         this.superClasses = new HashMap<>();
 
-        System.out.println("Im in the Symbol table constructor!");
     }
 
     public Class getClass(String className) {
@@ -21,15 +20,22 @@ public class SymbolTable {
         return null;
     }
 
-    public void insertClass(String className, String superClassName) {
+    public void insertClass(String className, String superClassName) throws Exception {
 
         int varOffset = 0, methodOffset = 0;
         String parentClass = null;
+
+        if(classes.containsKey(className))
+            throw new Exception("Class " + className + " is already declared");
 
         // If superclass exists insert it in the corresponting map as a value
         // also pass the right offsets to the class which is the offsets of
         // the superclass
         if(superClassName!=null) {
+            // Classes parents are declared befor classes that have parents
+            if(classes.containsKey(superClassName) == false)
+                throw new Exception("Wrong super class " + superClassName + ", it is not declared");
+
             superClasses.put(className, superClassName);
 
             Class currentSuperClass = getClass(superClassName);
@@ -44,9 +50,26 @@ public class SymbolTable {
         classes.put(className, tempClass);
     }
 
-    public Variable findVariable(String nameOfId, String[] scope) {
+    public Method findMethod(String nameOfMethod, String objCaller) {
 
-        System.out.println(nameOfId);
+        // Get the current class
+        Class currentClass = getClass(objCaller);
+
+        Method currentMethod = currentClass.getMethod(nameOfMethod);
+
+        if(currentMethod != null)
+            return currentMethod;
+
+        // If we didn't find it yet search the superclasses for its existance
+        // of course if they exist
+        String parentClass = currentClass.getparentClassName();
+        if(parentClass == null)
+            return null;
+        objCaller = parentClass;
+        return findMethod(nameOfMethod, objCaller);
+    }
+
+    public Variable findVariable(String nameOfId, String[] scope) {
         String methodName = scope[1];
         String className = scope[0];
 
@@ -73,9 +96,23 @@ public class SymbolTable {
         String parentClass = currentClass.getparentClassName();
         if(parentClass == null)
             return null;
-        scope[0] = parentClass;
-        scope[1] = null;
-        return findVariable(nameOfId, scope);
+        String[] newScope = new String[2];
+        newScope[0] = parentClass;
+        newScope[1] = null;
+        return findVariable(nameOfId, newScope);
+    }
+
+    public boolean isParentClass(String candParent, String child) {
+        String superClass = superClasses.get(child);
+
+        if(superClass == null) {        // There are no superclass for the class
+            return false;
+        }
+        else if(superClass.equals(candParent))  // There is a superclass and its the same as the candidate parent
+            return true;
+        else {                                  // Check if the superclass found is the child of the candidate parent
+            return isParentClass(candParent, superClass);
+        }
     }
 
     public void printOffset() {

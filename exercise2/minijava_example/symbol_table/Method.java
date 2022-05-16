@@ -60,6 +60,11 @@ public class Method {
         return params.size();
     }
 
+    public String getArgumentType(int index) {
+        Variable var = params.get(index);
+        return var.getType();
+    }
+
     public int getOffset() {
         return this.offset;
     }
@@ -76,12 +81,34 @@ public class Method {
         this.overridden = true;
     }
 
-    public void insertParameter(Variable param) {
+    public void insertParameter(Variable param) throws Exception {
+        String varName = param.getName();
+        for(Variable tempVar: params) {
+            String tempName = tempVar.getName();
+            if(tempName.equals(varName))
+                throw new Exception("Variable " + varName + " is already defined in method " + getName());
+        }
+
         // Insert the parameter in the list
         params.add(param);
     }
 
-    public void insertVariable(Variable var) {
+    public void insertVariable(Variable var) throws Exception {
+        String varName = var.getName();
+        for(Variable tempVar: vars) {
+            String tempName = tempVar.getName();
+            if(tempName.equals(varName))
+                throw new Exception("Variable " + varName + " is already defined in method " + getName());
+        }
+
+        for(Variable tempVar: params) {
+            String tempName = tempVar.getName();
+            if(tempName.equals(varName))
+                throw new Exception("Variable " + varName + " is already defined in method " + getName());
+        }
+        // if(vars.contains(var) || params.contains(var))
+            // throw new Exception("Variable " + varName + " is already defined in method " + getName());
+
         // Insert the variable in the list
         vars.add(var);
     }

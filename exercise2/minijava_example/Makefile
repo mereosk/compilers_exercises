@@ -8,10 +8,7 @@ compile:
 	javac Main.java
 
 clean:
-	rm -f *.class my_visitors/*.class symbol_table/*.class
-
-clean_all:
-	@printf "Cleaning up ..."; \
+	@printf "Cleaning everything up ..."; \
 	rm -f *.class my_visitors/*.class symbol_table/*.class; \
 	rm -f JavaCharStream.java minijava-jtb.jj MiniJavaParser* ParseException.java Token*; \
 	rm -rf visitor syntaxtree; \
