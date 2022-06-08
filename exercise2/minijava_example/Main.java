@@ -1,5 +1,6 @@
 import my_visitors.*;
 import symbol_table.*;
+import v_table.*;
 import syntaxtree.*;
 import visitor.*;
 
@@ -40,14 +41,21 @@ public class Main {
                 root.accept(smFilling, null);
 
                 // symTable.printSymbolTable();
-                symTable.printOffset();
+                // symTable.printOffset();
+                // System.out.println("--------------------------------");
+                // System.out.println(ANSI_GREEN + "Starting type checking the program" + ANSI_RESET);
+
+                // TCVisitor typeChecking = new TCVisitor(symTable);
+                // root.accept(typeChecking, null);
+
+                // System.out.println(ANSI_GREEN + "Finished, everything went smoothly\n" + ANSI_RESET);
+
+                // Now run the vistitor that fills the v_table
+                VTable vTable = new VTable();
+                FillVTableVisitor vtFilling = new FillVTableVisitor(vTable, symTable);
+                root.accept(vtFilling, null);
                 System.out.println("--------------------------------");
-                System.out.println(ANSI_GREEN + "Starting type checking the program" + ANSI_RESET);
-
-                TCVisitor typeChecking = new TCVisitor(symTable);
-                root.accept(typeChecking, null);
-
-                System.out.println(ANSI_GREEN + "Finished, everything went smoothly\n" + ANSI_RESET);
+                System.out.println(ANSI_GREEN + "Filled the vTable successfully" + ANSI_RESET);
 
             }   // Catch the parse exception
             catch(ParseException ex){
