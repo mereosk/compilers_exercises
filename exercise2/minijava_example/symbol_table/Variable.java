@@ -35,4 +35,25 @@ public class Variable {
     public void printVariable() {
         System.out.println("\t\t\t\t" + type + " " + name);
     }
+
+    @Override
+    public boolean equals(Object o){
+        if (this == o)
+			return true;
+
+		if (o == null)
+			return false;
+
+		if (getClass() != o.getClass())
+			return false;
+
+		return name.equals(((Variable) o).name);
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = hash*31 + this.name.hashCode();
+        return hash;
+    }
 }

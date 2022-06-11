@@ -9,8 +9,8 @@ public class SymbolTable {
 
     public SymbolTable() {
         // Initialize the values in the constructor
-        this.classes = new HashMap<>();
-        this.superClasses = new HashMap<>();
+        this.classes = new LinkedHashMap<>();
+        this.superClasses = new LinkedHashMap<>();
 
     }
 
@@ -18,6 +18,12 @@ public class SymbolTable {
         if(classes.containsKey(className))
             return classes.get(className);
         return null;
+    }
+
+    public Set<String> getClasses() {
+        Set<String> classNames = classes.keySet();
+
+        return classNames;
     }
 
     public void insertClass(String className, String superClassName) throws Exception {

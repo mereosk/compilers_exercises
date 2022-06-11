@@ -7,7 +7,8 @@ import visitor.*;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-
+import java.io.Writer;
+import java.io.FileWriter;
 
 public class Main {
 
@@ -56,6 +57,16 @@ public class Main {
                 root.accept(vtFilling, null);
                 System.out.println("--------------------------------");
                 System.out.println(ANSI_GREEN + "Filled the vTable successfully" + ANSI_RESET);
+                vTable.printFunctions();
+
+                // Now run the visitors that generates LLVM from minijava
+
+                // Initialise the LLVM writer who is gonna write on the file outputLLVM.ll
+                Writer writer = new FileWriter("misc/outputLLVM.ll");
+                LLVMVisitor llvmVisitor = new LLVMVisitor(symTable, vTable, writer);
+                root.accept(llvmVisitor, null);
+                // Close the writer
+                writer.close();
 
             }   // Catch the parse exception
             catch(ParseException ex){
