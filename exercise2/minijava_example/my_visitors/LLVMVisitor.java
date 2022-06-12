@@ -1,10 +1,12 @@
 package my_visitors;
 
+import symbol_table.Class;
 import symbol_table.*;
 import v_table.*;
 import syntaxtree.*;
 import visitor.GJDepthFirst;
 import java.io.Writer;
+import java.util.*;
 
 
 // This class is used in order to construct the reginsters in the
@@ -61,6 +63,10 @@ public class LLVMVisitor extends GJDepthFirst<Register, Void> {
         this.writer = writer;
     }
 
+    public void resetCounterReg() {
+        regCounter = 0;
+    }
+
     public String[] getScope() {
         return currentScope;
     }
@@ -82,28 +88,19 @@ public class LLVMVisitor extends GJDepthFirst<Register, Void> {
     }
 
     public String getNewRegister() {
-        return "%-" + ++regCounter;
+        int temp = regCounter;
+        regCounter++;
+        return "%_" + temp;
     }
 
-    public String getNewLabel() {
-        return "label-" + ++labelCounter;
+    public String getNewLabel(String labelName) {
+        int temp = labelCounter;
+        labelCounter++;
+        return labelName + temp;
     }
 
     public void emitLLVM(String strToWrite) throws Exception {
         writer.write(strToWrite);
-    }
-
-    // Convert a java type to LLVM type
-    public String converTypeLLVM(String type) {
-        if(type.equals("int"))
-            return "i32";
-        else if(type.equals("boolean"))
-            return "i1";
-        else if(type.equals("int[]") || type.equals("boolean[]"))
-            return "i32*";
-        else {  // The default class type
-            return "i8*";
-        }
     }
 
     // This function initialize the variables. If var is int or bool
@@ -218,22 +215,53 @@ public class LLVMVisitor extends GJDepthFirst<Register, Void> {
      */
     @Override
     public Register visit(MethodDeclaration n, Void argu) throws Exception {
-        // String argumentList = n.f4.present() ? n.f4.accept(this, null) : "";
-        // // Argument list is a big string with arguments that are in form:
-        // // int arg1, int arg2 etc
-        // // So split the list in an array
-        // String argArray[] = argumentList.split(",");
-    
+        resetCounterReg();
+        Register typeReg = n.f1.accept(this, null);
+        String type = typeReg.getType();
+        String methodName = n.f2.f0.tokenImage;
+        
+        // The name of the class is in the scope
+        String currentClassName = getClassScope();
 
-        // Register typeReg = n.f1.accept(this, null);
-        // String type = typeReg.getType()
-        // String name = n.f2.accept(this, null);
+        // Get the method from the symbol table
+        Class currentClass = symTable.getClass(currentClassName);
+        Method currentMethod = currentClass.getMethod(methodName);
 
+        emitLLVM("define " + type + " @" + currentClassName + "." + methodName + "(i8* %this");
 
-        // // Set the method's name as the scope
-        // setScopeMethod(name);
+        // Emit the parameters
+        List<Variable> params = currentMethod.getParams();
+        for (int i = 0; i < params.size(); i++) {
+            String paramType = params.get(i).getType();
+            String paramTypeLLVM = vTable.convertTypeLLVM(paramType);
+            String paramName = params.get(i).getName();
+            emitLLVM(", " + paramTypeLLVM + " %." + paramName);
+        }
+        emitLLVM(") {\n");
+
+        // Now allocate space for the params and store them to memory
+        for (int i = 0; i < params.size(); i++) {
+            //%num = alloca i32 store i32 %.num, i32* %num
+            String paramType = params.get(i).getType();
+            String paramTypeLLVM = vTable.convertTypeLLVM(paramType);
+            String paramName = params.get(i).getName();
+            emitLLVM("\t%" + paramName + " = alloca " + paramTypeLLVM +"\n");
+            emitLLVM("\tstore " + paramTypeLLVM + " %." + paramName + ", " + paramTypeLLVM + "* %" + paramName + "\n");
+        }
+
+        // Set the method's name as the scope
+        setScopeMethod(methodName);
 
         n.f7.accept(this, null);
+        n.f8.accept(this, null);
+
+        // Load and return the return value
+        Register returnRegister = n.f10.accept(this, null);
+        
+        String retName = returnRegister.getName();
+        String retType = returnRegister.getType();
+
+        emitLLVM("\n\tret " + type + " "  + retName);
 
         return null;
     }
@@ -293,15 +321,15 @@ public class LLVMVisitor extends GJDepthFirst<Register, Void> {
     */
     @Override
     public Register visit(VarDeclaration n, Void argu) throws Exception{
+        
         Register typeReg = n.f0.accept(this, null);
         String type = typeReg.getType();
 
-        Register nameReg = n.f1.accept(this, null);
-        String name = nameReg.getName();
+        String name = n.f1.f0.tokenImage;
 
         String initValue = initializeValue(type);
         // Print the variable declaration in the file
-        emitLLVM("\t"+name+" = alloca "+type+"\n");  // Allocate the space in memory for the var
+        emitLLVM("\t%"+name+" = alloca "+type+"\n");  // Allocate the space in memory for the var
         emitLLVM("\tstore "+type+" "+initValue+", "+type+"* "+name+"\n");  // Store the variable in memory
 
         return null;
@@ -339,8 +367,215 @@ public class LLVMVisitor extends GJDepthFirst<Register, Void> {
         return new Register(null, "i32");
     }
 
+    /**
+        * f0 -> Identifier()
+        * f1 -> "="
+        * f2 -> Expression()
+        * f3 -> ";"
+    */
+    public Register visit(AssignmentStatement n, Void argu) throws Exception {
+        Register leftOperant = n.f0.accept(this, null);
+        Register rightOperant = n.f2.accept(this, null);
+
+        // Get the types and names
+        String leftType = leftOperant.getType();
+        String leftName = leftOperant.getName();
+        String rightType = rightOperant.getType();
+        String rightName = rightOperant.getName();
+
+        // store i32 1, i32* %num_aux
+        emitLLVM("\tstore " + rightType + " " + rightName + ", " + leftType + "* " + leftName + "\n");
+        
+        return null;
+    }
+
+    /**
+     * f0 -> "if"
+     * f1 -> "("
+     * f2 -> Expression()
+     * f3 -> ")"
+     * f4 -> Statement()
+     * f5 -> "else"
+     * f6 -> Statement()
+    */
+    public Register visit(IfStatement n, Void argu) throws Exception {
+        Register ifExpr = n.f2.accept(this, null);
+        // Get the types and names
+        String ifExprType = ifExpr.getType();
+        String ifExprName = ifExpr.getName();
+
+        // Initialize the 3 labels
+        String labThen = getNewLabel("if");
+        String labElse = getNewLabel("if");
+        String labEnd = getNewLabel("if");
+
+        // eg. br i1 %_4, label %if0, label %if1
+        emitLLVM("\tbr " + ifExprType + " " + ifExprName + ", label %" + labThen + ", label %" + labElse);
+        emitLLVM(labThen + ":\n");
+        n.f4.accept(this, null);
+
+        // eg. br label %if2
+        emitLLVM("\tbr label %" + labElse + "\n");
+        emitLLVM(labElse+":\n");
+        n.f6.accept(this, null);
+
+        // eg. br label %if2
+        emitLLVM("\tbr label %" + labEnd + "\n");
+        emitLLVM(labEnd+":\n");
+
+        return null;
+    }
+
+    /**
+     * f0 -> PrimaryExpression()
+     * f1 -> "<"
+     * f2 -> PrimaryExpression()
+    */
+    public Register visit(CompareExpression n, Void argu) throws Exception {
+        Register cmp1 = n.f0.accept(this, null);
+        Register cmp2 = n.f2.accept(this, null);
+        // Get the type
+        String type = cmp1.getType();
+        // Get the leftish expr's name
+        String nameL = cmp1.getName();
+        // Get the rightish expr's name
+        String nameR = cmp2.getName();
+
+        String newRegister = getNewRegister();
+
+        // %_7 = icmp slt i32 %_3, %_6
+        emitLLVM("\t" + newRegister + " = icmp slt " + type + " " + nameL + ", " + nameR + "\n\n");
+
+        return new Register(newRegister, "i1");
+    }
+
+    /**
+     * f0 -> PrimaryExpression()
+     * f1 -> "+"
+     * f2 -> PrimaryExpression()
+    */
+    public Register visit(PlusExpression n, Void argu) throws Exception {
+        Register cmp1 = n.f0.accept(this, null);
+        Register cmp2 = n.f2.accept(this, null);
+        // Get the type
+        String type = cmp1.getType();
+        // Get the leftish expr's name
+        String nameL = cmp1.getName();
+        // Get the rightish expr's name
+        String nameR = cmp2.getName();
+
+        String newRegister = getNewRegister();
+
+        // %_7 = add i32 %_3, %_6
+        emitLLVM("\t" + newRegister + " = add " + type + " " + nameL + ", " + nameR + "\n\n");
+
+        return new Register(newRegister, "i32");
+    }
+
+    /**
+     * f0 -> PrimaryExpression()
+     * f1 -> "+"
+     * f2 -> PrimaryExpression()
+    */
+    public Register visit(MinusExpression n, Void argu) throws Exception {
+        Register cmp1 = n.f0.accept(this, null);
+        Register cmp2 = n.f2.accept(this, null);
+        // Get the type
+        String type = cmp1.getType();
+        // Get the leftish expr's name
+        String nameL = cmp1.getName();
+        // Get the rightish expr's name
+        String nameR = cmp2.getName();
+
+        String newRegister = getNewRegister();
+
+        // %_7 = sub i32 %_3, %_6
+        emitLLVM("\t" + newRegister + " = sub " + type + " " + nameL + ", " + nameR + "\n\n");
+
+        return new Register(newRegister, "i32");
+    }
+
+    /**
+     * f0 -> PrimaryExpression()
+     * f1 -> "+"
+     * f2 -> PrimaryExpression()
+    */
+    public Register visit(TimesExpression n, Void argu) throws Exception {
+        Register cmp1 = n.f0.accept(this, null);
+        Register cmp2 = n.f2.accept(this, null);
+        // Get the type
+        String type = cmp1.getType();
+        // Get the leftish expr's name
+        String nameL = cmp1.getName();
+        // Get the rightish expr's name
+        String nameR = cmp2.getName();
+
+        String newRegister = getNewRegister();
+
+        // %_7 = sub i32 %_3, %_6
+        emitLLVM("\t" + newRegister + " = mul " + type + " " + nameL + ", " + nameR + "\n\n");
+
+        return new Register(newRegister, "i32");
+    }
+
     @Override
-    public Register visit(Identifier n, Void argu) {
-        return new Register(getNewRegister(), n.f0.toString());
+    public Register visit(Identifier n, Void argu) throws Exception {
+        String name = n.f0.tokenImage;
+        
+        // Find the variable
+        Variable curVar = symTable.findVariable(name, getScope());
+
+        String newReg = getNewRegister();
+        // Take the type of the variable and convert it to llvm
+        if(curVar == null) 
+            throw new Exception("Undefined symbol " + name + currentScope[0]);
+        String varType = curVar.getType();
+        String varTypeLLVM = vTable.convertTypeLLVM(varType);
+        // Take the name of the variable
+        String varName = curVar.getName();
+        // %_15 = load i32, i32* %num_aux
+        emitLLVM("\t" + newReg + " = load " + varTypeLLVM + ", " + varTypeLLVM + "* %" + varName + "\n");
+
+        return new Register(newReg, varTypeLLVM);
+    }
+
+    public Register visit(AllocationExpression n, Void argu) throws Exception {
+        // String nameOfClass = n.f1.f0.tokenImage;
+
+        // // Check in the symbol table if a class named "nameOfClass" exists
+        // Class currentClass = symTable.getClass(nameOfClass);
+        // if(currentClass == null)
+        //     throw new Exception("Cannot allocate new object, because symbol " + nameOfClass + " is not a class");
+
+        // // Instead of type return the name of the class
+        return null;
+    }
+
+    // f0 -> PrimaryExpression()
+	// f1 -> "."
+	// f2 -> Identifier()
+	// f3 -> "("
+	// f4 -> ( ExpressionList() )?
+	// f5 -> ")"
+	public Register visit(MessageSend n, String argu) throws Exception {
+        String methodname = n.f2.f0.tokenImage;
+		return null;
+	}
+
+    public Register visit(ThisExpression n, String argu) {
+
+		return null;
+	}
+
+    public Register visit(TrueLiteral n, Void argu) {
+        return new Register("1", "i1");
+    }
+
+    public Register visit(FalseLiteral n, Void argu) {
+        return new Register("0", "i1");
+    }
+
+    public Register visit(IntegerLiteral n, Void argu) throws Exception {
+        return new Register(n.f0.toString(), "i32");
     }
 }   

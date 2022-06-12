@@ -68,9 +68,61 @@ public class VTable {
             String className = classIterator.next();
             writer.write("@." + className + "_vtable = global [");
             
-            writer.write(methodCounter.get(className) + " x i8*] []");
-            writer.write("\n");
+            // Get the methods
+            Map<Method, String> methods =  getMethods(className);
+            // Get the number of methods
+            int methodCounter = methods.size();
+            writer.write(methodCounter + " x i8*] [");
+
+            // Iterate through all the methods and print some infos
+            for (Map.Entry<Method, String> entry : methods.entrySet()) {
+                // Emitting: i8* bitcast ({retValue} (i8*, {parameters})* @{ownerClass}.{methodName} to i8*)
+                Method currentMethod = entry.getKey();
+                String owner = entry.getValue();
+                String methodType = currentMethod.getType();
+                String methodName = currentMethod.getName();
+
+                // First parameter is i8* which is this
+                writer.write("i8* bitcast (" + convertTypeLLVM(methodType) +  " (i8*");
+
+                // Emit parameters
+                List<Variable> params = currentMethod.getParams();
+                for (int i = 0; i < params.size(); i++) {
+                    String paramType = params.get(i).getType();
+                    writer.write("," + convertTypeLLVM(paramType));
+                }
+                // Emit )* @{ownerClass}.{methodName} to i8*), 
+                String lastChar;
+                methodCounter--;
+                if(methodCounter > 0)
+                    lastChar = ", ";
+                else
+                    lastChar = "";
+                writer.write(")* @" + owner + "." + methodName + " to i8*)" + lastChar);
+
+            }
+            writer.write("]\n");
          }
-        
+
+         // Nextly print the boilerplate
+         writer.write("\n\ndeclare i8* @calloc(i32, i32)\ndeclare i32 @printf(i8*, ...)\n"
+         + "declare void @exit(i32)\n\n@_cint = constant [4 x i8] c\"%d\\0a\\00\"\n"
+         + "@_cOOB = constant [15 x i8] c\"Out of bounds\\0a\\00\"\ndefine void @print_int(i32 %i) {\n"
+         + "    %_str = bitcast [4 x i8]* @_cint to i8*\n    call i32 (i8*, ...) @printf(i8* %_str, i32 %i)\n"
+         + "    ret void\n}\n\ndefine void @throw_oob() {\n    %_str = bitcast [15 x i8]* @_cOOB to i8*\n"
+         + "    call i32 (i8*, ...) @printf(i8* %_str)\n    call void @exit(i32 1)\n    ret void\n}\n\n");
+    }
+
+    // Convert a java type to LLVM type
+    public String convertTypeLLVM(String type) {
+        if(type.equals("int"))
+            return "i32";
+        else if(type.equals("boolean"))
+            return "i1";
+        else if(type.equals("int[]") || type.equals("boolean[]"))
+            return "i32*";
+        else {  // The default class type
+            return "i8*";
+        }
     }
 }

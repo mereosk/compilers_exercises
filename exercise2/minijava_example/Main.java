@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Writer;
 import java.io.FileWriter;
+import java.io.File;  // Import the File class
 
 public class Main {
 
@@ -23,10 +24,12 @@ public class Main {
             System.exit(1);
         }
 
+        int fileNumber = 0;
         // Loop through all the arguments
         for(String arg: args) {
             FileInputStream fis = null;
             try{
+                fileNumber++;
                 fis = new FileInputStream(arg);
                 System.err.println("-------------------------------");
                 System.err.println("Parsing the program " + arg);
@@ -57,12 +60,15 @@ public class Main {
                 root.accept(vtFilling, null);
                 System.out.println("--------------------------------");
                 System.out.println(ANSI_GREEN + "Filled the vTable successfully" + ANSI_RESET);
-                vTable.printFunctions();
+                // vTable.printFunctions();
 
                 // Now run the visitors that generates LLVM from minijava
-
+                
+                // Create a file name'd file[number].java in misc folder
+                File myFile = new File("./misc/file" + (fileNumber-1) + ".ll");
+                myFile.createNewFile();
                 // Initialise the LLVM writer who is gonna write on the file outputLLVM.ll
-                Writer writer = new FileWriter("misc/outputLLVM.ll");
+                Writer writer = new FileWriter("./misc/"+myFile.getName());
                 LLVMVisitor llvmVisitor = new LLVMVisitor(symTable, vTable, writer);
                 root.accept(llvmVisitor, null);
                 // Close the writer

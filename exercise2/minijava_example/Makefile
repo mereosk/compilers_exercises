@@ -10,6 +10,7 @@ compile:
 
 clean:
 	@printf "Cleaning everything up ..."; \
+	rm -f misc/*; \
 	rm -f *.class my_visitors/*.class symbol_table/*.class v_table/*.class; \
 	rm -f JavaCharStream.java minijava-jtb.jj MiniJavaParser* ParseException.java Token*; \
 	rm -rf visitor syntaxtree; \
